@@ -55,6 +55,7 @@
   class HummerCtrl extends Laya.Script {
       constructor() {
           super();
+          this.isGameOver = false;
       }
       Init(camera, scene, effect) {
           this.camera = camera;
@@ -66,8 +67,17 @@
           this.ray = new Laya.Ray(new Laya.Vector3(), new Laya.Vector3());
           this.hitResult = new Laya.HitResult();
           Laya.stage.on(Laya.Event.MOUSE_DOWN, this, this.onDown);
+          Laya.stage.on("GameOver", this, function () {
+              this.isGameOver = true;
+          });
+          Laya.stage.on("AgainGame", this, function () {
+              this.isGameOver = false;
+          });
       }
       onDown() {
+          if (this.isGameOver) {
+              return;
+          }
           this.camera.viewportPointToRay(new Laya.Vector2(Laya.stage.mouseX, Laya.stage.mouseY), this.ray);
           if (this.physicsSimulation.rayCast(this.ray, this.hitResult)) {
               const target = this.hitResult.collider.owner;
@@ -83,6 +93,7 @@
                       this.hitResult.collider.owner.getComponent(MoleCtrl).Knock();
                       var temp = Laya.Sprite3D.instantiate(this.effect, this.scene, false, this.targetPos).addComponent(EffectAutoDestory);
                       console.log(Laya.stage.event("AddScore"));
+                      Laya.SoundManager.playSound("res/audio/hit.mp3");
                       Laya.Tween.from(this.owner.transform, {
                           localPositionX: this.targetPos.x,
                           localPositionY: 7,
@@ -106,6 +117,7 @@
           Laya.Scene3D.load("res/scene/LayaScene_Main/Conventional/Main.ls", Laya.Handler.create(this, this.onLoadSceneFinish));
       }
       onLoadSceneFinish(loadScene) {
+          Laya.SoundManager.playMusic("res/audio/bg.mp3", 0);
           loadScene.zOrder = -1;
           Laya.stage.addChild(loadScene);
           var moles = loadScene.getChildByName("Moles");
@@ -128,14 +140,49 @@
           super();
           this.txt_Time = null;
           this.txt_Score = null;
-          this.gameoverPanel = null;
+          this.gameOverPanel = null;
           this.score = 0;
+          this.timer = 0;
+          this.time = 60;
           Laya.stage.on("AddScore", this, this.addScore);
+      }
+      onAwake() {
+          this.gameOverPanel.getChildAt(0).on(Laya.Event.CLICK, this, this.againGame);
       }
       addScore() {
           this.score++;
           console.log(this.score);
           this.txt_Score.text = "Score:" + this.score;
+      }
+      onUpdate() {
+          if (this.time <= 0) {
+              this.gameOver();
+              return;
+          }
+          this.timer += Laya.timer.delta / 1000;
+          if (this.timer >= 1) {
+              this.timer = 0;
+              this.time--;
+              this.txt_Time.text = "Time:" + this.time + "s";
+          }
+      }
+      gameOver() {
+          console.log("游戏结束了");
+          this.txt_Score.visible = false;
+          this.txt_Time.visible = false;
+          this.gameOverPanel.visible = true;
+          Laya.stage.event("GameOver");
+      }
+      againGame() {
+          this.score = 0;
+          this.time = 60;
+          this.timer = 0;
+          this.txt_Score.text = "Score:0";
+          this.txt_Score.visible = true;
+          this.txt_Time.text = "Time:60s";
+          this.txt_Time.visible = true;
+          this.gameOverPanel.visible = false;
+          Laya.stage.event("AgainGame");
       }
   }
 

@@ -25,6 +25,7 @@ export default class GameRoot extends Laya.Script {
 
   //场景加载完成之后的回调方法，参数:加载完成后的场景
   onLoadSceneFinish(loadScene: Laya.Scene3D) {
+    Laya.SoundManager.playMusic("res/audio/bg.mp3", 0);
     loadScene.zOrder = -1;
     Laya.stage.addChild(loadScene);
     var moles = loadScene.getChildByName("Moles");

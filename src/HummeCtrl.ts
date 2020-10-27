@@ -10,6 +10,7 @@ export default class HummerCtrl extends Laya.Script {
   private physicsSimulation: Laya.PhysicsSimulation;
 
   private targetPos: Laya.Vector3;
+  private isGameOver: boolean = false;
 
   constructor() {
     super();
@@ -31,9 +32,19 @@ export default class HummerCtrl extends Laya.Script {
 
     //判断鼠标左键按下
     Laya.stage.on(Laya.Event.MOUSE_DOWN, this, this.onDown);
+    Laya.stage.on("GameOver", this, function () {
+      this.isGameOver = true;
+    });
+    Laya.stage.on("AgainGame", this, function () {
+      this.isGameOver = false;
+    });
   }
 
   onDown() {
+    if (this.isGameOver) {
+      return;
+    }
+
     // 将屏幕坐标转化为射线
     this.camera.viewportPointToRay(
       new Laya.Vector2(Laya.stage.mouseX, Laya.stage.mouseY),
@@ -69,7 +80,8 @@ export default class HummerCtrl extends Laya.Script {
               false,
               this.targetPos
             ).addComponent(EffectAutoDestory);
-            console.log(Laya.stage.event("AddScore"));
+            // console.log(Laya.stage.event("AddScore"));
+            Laya.SoundManager.playSound("res/audio/hit.mp3");
             // temp.transform.position = this.targetPos;
             Laya.Tween.from(
               (this.owner as Laya.Sprite3D).transform,
